@@ -1,7 +1,6 @@
 let ethers = require('ethers');
 let fs = require('fs');
 let moralisProvider = new ethers.providers.JsonRpcProvider(`https://speedy-nodes-nyc.moralis.io/f9e87192cf737ca99dafaaef/avalanche/mainnet`)
-// let moralisProvider = new ethers.providers.JsonRpcProvider(`https://avalanche.public-rpc.com`)
 
 let interfaces;
 
@@ -31,20 +30,29 @@ async function getSetOfPairs() {
   return swapAddresses;
 }
 
-async function getTransactionSwapAddresses(tx) {
-  let transaction = await moralisProvider.getTransactionReceipt(tx);
-  let swapAddresses = new Set();
-  for(let i = 0; i < transaction.logs.length; i++) {
-    if(transaction.logs[i].data.length === 258) {
-      for(let j = 0; j < interfaces.length; j++) {
-        if(interfaces[j].parseLog(transaction.logs[i])) {
-          swapAddresses.add(transaction.logs[i].address)
-          break;
+async function getTransactionSwapAddresses(tx, retry = 2) {
+  try {
+    let transaction = await moralisProvider.getTransactionReceipt(tx);
+    let swapAddresses = new Set();
+    for(let i = 0; i < transaction.logs.length; i++) {
+      if(transaction.logs[i].data.length === 258) {
+        for(let j = 0; j < interfaces.length; j++) {
+          if(interfaces[j].parseLog(transaction.logs[i])) {
+            swapAddresses.add(transaction.logs[i].address)
+            break;
+          }
         }
       }
     }
+    return swapAddresses;
+  } catch(e) {
+    if(retry > 0) {
+      await getTransactionSwapAddresses(tx, retry-1);
+    } else {
+      console.error(e);
+    }
   }
-  return swapAddresses;
+
 }
 
 async function main() {
@@ -52,7 +60,7 @@ async function main() {
   for(let i = 0; i < interfaces.length; i++) {
     interfaces[i] = new ethers.utils.Interface(interfaces[i]);
   }
-  fs.writeFileSync('./pairaddresses.json', JSON.stringify([...(await getSetOfPairs())]));
+  fs.writeFileSync('../data/pairaddresses.json', JSON.stringify([...(await getSetOfPairs())]));
 }
 
 main().catch(console.error);
