@@ -28,8 +28,8 @@ async function main() {
   }
   let graph = new Graph(Object.keys(pairsData).length);
   for(let i = 0; i < pairsData.length; i++) {
-    graph.addEdge(new Edge(s[pairsData[i].token0.symbol], s[pairsData[i].token1.symbol], pairsData[i].prices[0]));
-    graph.addEdge(new Edge(s[pairsData[i].token1.symbol], s[pairsData[i].token0.symbol], pairsData[i].prices[1]));
+    graph.addEdge(new Edge(s[pairsData[i].token0.symbol], s[pairsData[i].token1.symbol], Math.log(pairsData[i].prices[0])));
+    graph.addEdge(new Edge(s[pairsData[i].token1.symbol], s[pairsData[i].token0.symbol], Math.log(pairsData[i].prices[1])));
   }
   fs.writeFileSync('./asd.json', JSON.stringify(graph.edges))
   let r = graph.findNegativeCycle(1);
