@@ -71,7 +71,7 @@ contract Arbitrager {
                 require(false, "Nevaliden symbol input");
             }
         }
-        require(from.balanceOf(address(this)) > amountBefore, "Na zaguba sme");
+//        require(from.balanceOf(address(this)) > amountBefore, "Na zaguba sme");
     }
 
     function stringsEquals(string memory s1, string memory s2) private pure returns (bool) {

@@ -18,7 +18,7 @@ describe("Arbitrage test", function () {
                 {
                     forking: {
                         jsonRpcUrl: AVALANCHE_NODE_URL,
-                        blockNumber: 16067046,
+                        blockNumber: 16067045,
                     },
                 },
             ],
