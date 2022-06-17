@@ -2,9 +2,6 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/types";
 import * as dotenv from "dotenv";
-dotenv.config();
-
-const AVALANCHE_MAINNET_URL = process.env.AVALANCHE_MAINNET_URL;
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -15,13 +12,13 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       chainId: 43114,
-      gasPrice: 225000000000,
+      gasPrice: 30402582315,
       throwOnTransactionFailures: false,
       loggingEnabled: true,
       forking: {
-        url: AVALANCHE_MAINNET_URL as string,
+        url: 'https://api.avax.network/ext/bc/C/rpc',
         enabled: true,
-        blockNumber: 15921208
+        blockNumber: 16067046
       },
     },
   },

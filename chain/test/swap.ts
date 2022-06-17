@@ -5,7 +5,8 @@ import { Arbitrager } from "../typechain";
 import { expect } from "chai";
 
 const WAVAX_ADDRESS: string = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7";
-const AVALANCHE_NODE_URL: string = process.env.AVALANCHE_MAINNET_URL as string;
+const USDT_e_ADDRESS: string = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118";
+const AVALANCHE_NODE_URL: string = 'https://api.avax.network/ext/bc/C/rpc';
 
 describe("Arbitrage test", function () {
     let arbitrager: Arbitrager;
@@ -17,7 +18,7 @@ describe("Arbitrage test", function () {
                 {
                     forking: {
                         jsonRpcUrl: AVALANCHE_NODE_URL,
-                        blockNumber: 15921208,
+                        blockNumber: 16067046,
                     },
                 },
             ],
@@ -31,23 +32,23 @@ describe("Arbitrage test", function () {
 
     it("should work", async function () {
         const wavaxTokenContract = await ethers.getContractAt("IWAVAX", WAVAX_ADDRESS);
-        if ((await wavaxTokenContract.balanceOf(account.address)).lt("1000000000000000000000")) {
+        if ((await wavaxTokenContract.balanceOf(account.address)).lt("131140477242002305040")) {
             await wavaxTokenContract.deposit({
-                value: BigNumber.from("1000000000000000000000")
+                value: BigNumber.from("131140477242002305040")
                     .sub(await wavaxTokenContract.balanceOf(account.address))
             })
         }
-        console.log(await wavaxTokenContract.balanceOf(account.address));
-        await wavaxTokenContract.approve(arbitrager.address, ethers.constants.MaxUint256);
-        await wavaxTokenContract.approve('0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256', ethers.constants.MaxUint256);
-        // let r = await arbitrager.arbitrage(
-        //   ["0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256", "0x708c1b2ae45d9F5986bF4fcB0A0120fe0DB20dC3", "0x0b212115882252E3640839feACF6CD45a8f419F5", "0xcBb424fd93cDeC0EF330d8A8C985E8b147F62339"],
-        //   ["USDT.e", "USDC.e", "MIM", "WAVAX"],
-        //   1000000000);
+        expect((await wavaxTokenContract.balanceOf(arbitrager.address) as BigNumber).toString()).equals('0');
+        expect((await wavaxTokenContract.balanceOf(account.address) as BigNumber).toString()).equals('131140477242002305040');
+        await wavaxTokenContract.transfer(arbitrager.address, '131140477242002305040');
+        expect((await wavaxTokenContract.balanceOf(account.address) as BigNumber).toString()).equals('0');
+        let before = (await wavaxTokenContract.balanceOf(arbitrager.address) as BigNumber);
+        expect(before.toString()).equals('131140477242002305040');
         let r = await arbitrager.arbitrage(
-          ["0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256"],
-          ["USDT.e"],
-          1000000000);
-        console.log(await wavaxTokenContract.balanceOf(account.address));
+          ["0x5875c368Cddd5FB9Bf2f410666ca5aad236DAbD4", "0x6F3a0C89f611Ef5dC9d96650324ac633D02265D3"],
+          ["LINK.e", "WAVAX"],
+          '131140477242002305040');
+        await r.wait();
+        expect(before).lt((await wavaxTokenContract.balanceOf(arbitrager.address) as BigNumber));
     });
 });

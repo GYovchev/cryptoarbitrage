@@ -1,5 +1,7 @@
 pragma solidity 0.8.4;
 
+import "hardhat/console.sol";
+
 interface IPair {
     function factory() external view returns (address);
     function token0() external view returns (address);
@@ -12,6 +14,7 @@ interface IRouter {
 }
 
 interface IERC20 {
+    function balanceOf(address account) external view returns (uint256);
     function transferFrom(address from, address to, uint value) external;
     function approve(address to, uint value) external returns (bool);
     function symbol() external view returns (string memory);
@@ -36,6 +39,8 @@ contract Arbitrager {
         for(uint i = 0; i < pairsPath.length; i++) {
             pairsPathF[i] = IPair(pairsPath[i]);
         }
+        uint256 amountBefore = 0;
+        IERC20 from;
         uint256 inAm = amountIn;
         for(uint i = 0; i < pairsPath.length; i++) {
             IRouter router = getRouter(pairsPathF[i]);
@@ -45,15 +50,28 @@ contract Arbitrager {
             IERC20 token1 = IERC20(address1);
             address[] memory t = new address[](2);
             if (stringsEquals(token0.symbol(),symbolPath[i])) {
+                if(amountBefore == uint256(0)) {
+                    amountBefore = token1.balanceOf(address(this));
+                    from = token1;
+                }
+                token1.approve(address(router), inAm);
                 t[0] = address1;
                 t[1] = address0;
-                inAm = router.swapExactTokensForTokens(inAm, 0, t, msg.sender, block.timestamp + 5 * 60 * 1000)[2];
-            } else {
+                inAm = router.swapExactTokensForTokens(inAm, 0, t, address(this), block.timestamp + 5 * 60 * 1000)[1];
+            } else if(stringsEquals(token1.symbol(),symbolPath[i])) {
+                if(amountBefore == uint256(0)) {
+                    amountBefore = token0.balanceOf(address(this));
+                    from = token0;
+                }
+                token0.approve(address(router), inAm);
                 t[0] = address0;
                 t[1] = address1;
-                inAm = router.swapExactTokensForTokens(inAm, 0, t, msg.sender, block.timestamp + 5 * 60 * 1000)[2];
+                inAm = router.swapExactTokensForTokens(inAm, 0, t, address(this), block.timestamp + 5 * 60 * 1000)[1];
+            } else {
+                require(false, "Nevaliden symbol input");
             }
         }
+        require(from.balanceOf(address(this)) > amountBefore, "Na zaguba sme");
     }
 
     function stringsEquals(string memory s1, string memory s2) private pure returns (bool) {
@@ -72,6 +90,6 @@ contract Arbitrager {
         if(factoryAddress == pangolinFactoryAddress) return IRouter(pangolinRouterAddress);
         if(factoryAddress == traderJoeFactoryAddress) return IRouter(traderJoeRouterAddress);
         if(factoryAddress == uniswapV2FactoryAddress) return IRouter(uniswapV2RouterAddress);
-        require(false);
+        require(false, "Ibasi");
     }
 }
